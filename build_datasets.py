@@ -2,14 +2,10 @@ import pandas as pd
 import numpy as np
 from utils import *
 
-####################################################################################
-# Load all the data ================================================================
-# file_path = r'./POWCONS_with_voltages_2.TXT'
-# file_path = r'C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/new_DATA/Split_into_train_test/DATA_source/ALL_DATA_MERGED.txt'
-file_path = r'C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/DATA/newerrrr_DATA/DATA_ready_to_use.txt'
-all_data = load_data(file_path)
-all_data = all_data[:4000000]
 
+##########################################################
+# Set parameters.
+ht_column = None    # If None will pick a random available column
 averaging_level = 5
 
 P_trojan_min = 10
@@ -19,14 +15,26 @@ num_of_ht_rows = 1000  # HT points per instance
 total_num_of_HT_rows = 100000  # total number of HT rows to be generated
 N = int(total_num_of_HT_rows/num_of_ht_rows)   # number of HT locations
 
+just_in_case = 200
+buffer_zone = averaging_level + num_of_ht_rows + just_in_case
+# ----------
 
 
-buffer_zone = averaging_level + num_of_ht_rows
-####################################################################################
+##########################################################
+# Load the raw dataset. (Only HT-clean data points)
 
-####################################################################################
-# Add Trojan rows to the data. =====================================================
+# file_path = r'./POWCONS_with_voltages_2.TXT'
+# file_path = r'C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/new_DATA/Split_into_train_test/DATA_source/ALL_DATA_MERGED.txt'
+# file_path = r'C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/DATA/newerrrr_DATA/DATA_ready_to_use.txt'
+file_path = r'../../DATA/newerrrr_DATA/DATA_ready_to_use.txt'
+all_data = load_data(file_path)
+all_data = all_data[:4000000]
 all_data_numpy = np.r_[all_data]
+
+
+##########################################################
+# Add Trojan rows to the data.
+
 n_all_data_rows, n_all_data_columns = all_data_numpy.shape
 
 initial_available_index_range = np.arange(averaging_level, n_all_data_rows - num_of_ht_rows)
@@ -38,52 +46,53 @@ for i in range(N):
     print()
     print("HT instance: ", i)
     print("HT index range:  ", index, index + num_of_ht_rows)
-    remove_from_available_index_range = np.arange(index - buffer_zone, index + buffer_zone + 1)
-    available_index_range = np.setdiff1d(available_index_range, remove_from_available_index_range)
+    unavailable_indices = np.arange(index - buffer_zone, index + buffer_zone + 1)
+    available_index_range = np.setdiff1d(available_index_range, unavailable_indices)
+
     all_data = add_trojan_rows(data_set=all_data, i=index, num_of_trojan_rows=num_of_ht_rows,
-                               trojan_min=P_trojan_min, trojan_max=P_trojan_max, ht_column_choice=0)
-    # ht_index_list = np.append(ht_index_list, np.arange(index, index + buffer_zone))
+                               trojan_min=P_trojan_min, trojan_max=P_trojan_max, ht_column_choice=ht_column)
+
     ht_index_list = np.append(ht_index_list, np.arange(index, index + num_of_ht_rows))
+    ht_affected_index_list = np.append(ht_index_list, np.arange(index, index + num_of_ht_rows + averaging_level))
 
 ht_index_list = np.sort(ht_index_list)      # This list is for later use
-####################################################################################
-# print(ht_index_list)
+print(ht_index_list)
+# ----------
 
 
-####################################################################################
-# Calculate the moving averages data frame =========================================
+##########################################################
+# Calculate the moving averages data frame.
+
 all_data = moving_average_panda(all_data, averaging_level, drop_initial_data=False)
-####################################################################################
+# ----------
 
-
-####################################################################################
+##########################################################
 # Separate trojan rows (index:index +  num_of_ht_rows + averaging_level) from clean rows (0:index) and (index +  num_of_ht_rows + averaging_level : end)
-# Separate trojan rows from clean rows
+# Separate trojan rows from clean rows.
+
 # trojan_free_indexes = np.append(np.arange(averaging_level, index), np.arange(index + num_of_ht_rows + averaging_level, n_all_data_rows))
 # trojan_rows = all_data.drop(trojan_free_indexes, axis=0)
 # all_data_clean = all_data.drop(range(index, index + num_of_ht_rows + averaging_level), axis=0)
 trojan_rows = all_data.iloc[ht_index_list, :]
 all_data_clean = all_data.drop(ht_index_list, axis=0)
-####################################################################################
+# ----------
 
+##########################################################
+# Split the moving average data frame into train and test.
 
-####################################################################################
-# Split the moving average data frame into train and test ==========================
 all_data_clean = all_data_clean.drop_duplicates()
 spl_ratio = (all_data_clean.shape[0] - N * num_of_ht_rows)/all_data_clean.shape[0]
 training_data, testing_data = split_to_train_test(spl_ratio, all_data_clean)
-####################################################################################
+# ----------
 
-# Append Trojan rows to test data
+##########################################################
+# Append Trojan rows to test data.
+
 #testing_data = np.append(testing_data, trojan_rows, axis=0)
 
+# ----------
 
-
-
-
-
-
-
+##########################################################
 # Save data sets in text files
 
 # np.savetxt("C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/new_DATA/Split_into_train_test/HT_toDraw2Ddiagram/4/my_training_data.txt", training_data, fmt='%.2f', delimiter=", ")
@@ -101,5 +110,6 @@ training_data, testing_data = split_to_train_test(spl_ratio, all_data_clean)
 #     print("The following parameters have been chosen to generate a {} row long HT dataset\n".format(num_of_ht_rows*N),
 #           "\nAveraging level = {}\nHT points = {}\nHT P_min = {}\nHT P_max = {}".format(averaging_level, num_of_ht_rows, P_trojan_min, P_trojan_max), file=text_file)
 
+#----------
 
 print("Done!!!")
