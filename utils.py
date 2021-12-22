@@ -28,7 +28,7 @@ def load_data(path):
 #     return np.around(mov_av, decimals=2)
 
 ########################################################## ??????????????????????????????????????
-# Add Trojan rows to the data.
+
 def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns, buffer, initial_available_indices=None):
     """
         This function generates locations for the HTs to be placed.
@@ -70,6 +70,35 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns, buff
     # ht_index_list = np.sort(ht_index_list)
 
     return trojan_locations, remaining_available_indices
+
+
+def generate_ht_instance(ht_length, distribution_type = 'normal', distribution_params):
+    """
+        This function generates a numpy array of power consumption values for a single HT instance.
+
+        Arguments:  ht_length           -> Number of HT power values to be generated per HT instance. Same as T_ht.
+                    distribution_type   -> String containing 'normal' or 'uniform'. The distribution type from
+                                           which the HT's power consumption values will be drawn.
+                    distribution_params -> Dictionary containing the parameters for the respective distribution.
+                                           Keys: 'mean', 'sigma' for normal distribution,
+                                                 'min', 'max' for uniform distribution.
+
+        Return:     * Array of length 'ht_length', containing HT's power consumption values.
+
+    """
+
+    if distribution_type is 'normal':
+        mean = distribution_params["mean"]
+        sigma = distribution_params["sigma"]
+        ht_instance = np.random.normal(loc=mean, scale=sigma, size=(ht_length, 1))
+    elif distribution_type is 'uniform':
+        ht_Pmin = distribution_params["min"]
+        ht_Pmax = distribution_params["max"]
+        ht_instance = np.random.uniform(low=ht_Pmin, high=ht_Pmax, size=(ht_length, 1))
+    else:
+        raise ValueError("The distribution type should be 'normal' or 'uniform'.")
+
+    return ht_instance
 # ---------- ??????????????????????????????????????
 
 def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_column_choice=None):
