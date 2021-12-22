@@ -27,6 +27,51 @@ def load_data(path):
 #
 #     return np.around(mov_av, decimals=2)
 
+########################################################## ??????????????????????????????????????
+# Add Trojan rows to the data.
+def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns, buffer, initial_available_indices=None):
+    """
+        This function generates locations for the HTs to be placed.
+
+        Arguments:  ht_count      -> Number of HT instances to be placed.
+                    ht_length     -> Number of rows to be allocated per HT instance. Same as T_ht.
+                    total_rows    -> Number of rows in the dataset where the HT will be placed.
+                    total_columns -> Number of columns in the dataset where the HT will be placed.
+                    buffer        -> Number of indices blocked from either side of the first index of an HT instance.
+
+        Return:     * List of 'ht_count' number of tuples, where every tuple contains information
+                      about the column and indices of a single HT instance.
+                    * List of the remaining available indices where 'choose_trojan_locations()'
+                      can be applied.
+
+    """
+
+    if initial_available_indices is None:
+        initial_available_indices = np.arange(averaging_level, total_rows - ht_length)
+
+    remaining_available_indices = initial_available_indices
+
+    trojan_locations = []
+    # ht_index_list = np.array([], dtype=np.int64)
+    for _ in range(ht_count):
+
+        ht_column = np.random.choice(range(total_columns))
+        ht_index = np.random.choice(remaining_available_indices)    # choose index
+        ht_indices = np.arange(ht_index, ht_index + ht_length)
+
+        trojan_locations.append((ht_column, ht_indices))
+
+        occupied_indices = np.arange(ht_index - buffer, ht_index + buffer + 1)
+        remaining_available_indices = np.setdiff1d(remaining_available_indices, occupied_indices)
+
+        # ht_index_list = np.append(ht_index_list, np.arange(ht_index, ht_index + ht_length))
+        # ht_affected_index_list = np.append(ht_index_list, np.arange(ht_index, ht_index + ht_length + averaging_level))
+
+    # ht_index_list = np.sort(ht_index_list)
+
+    return trojan_locations, remaining_available_indices
+# ---------- ??????????????????????????????????????
+
 def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_column_choice=None):
     """ Take a random i from (0 : last - num_of_trojan_rows) and add HTs
         to rows (i : i + num_of_trojan_rows). Trojan power consumption is
@@ -48,9 +93,11 @@ def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_
     columns_without_trojan_2 = data_set[trojan_indexes, ht_column+1:total_columns]
     trojan_rows = np.append(columns_without_trojan_1, column_with_trojan, axis=1)
     trojan_rows = np.append(trojan_rows, columns_without_trojan_2, axis=1)
-    """column_with_trojan = data_set[trojan_indexes, 0:1] + trojan_power
-    columns_without_trojan = data_set[trojan_indexes, 1:5]
-    trojan_rows = np.append(column_with_trojan, columns_without_trojan, axis=1)"""
+
+    # column_with_trojan = data_set[trojan_indexes, 0:1] + trojan_power
+    # columns_without_trojan = data_set[trojan_indexes, 1:5]
+    # trojan_rows = np.append(column_with_trojan, columns_without_trojan, axis=1)
+
     infected_data_part_1 = np.append(data_set[range(i), 0:5], trojan_rows, axis=0)
     infected_data_all = np.append(infected_data_part_1, data_set[range(i + num_of_trojan_rows, total_rows), 0:5], axis=0)
     infected_data_all = pd.DataFrame(infected_data_all, columns=['1', '2', '3', '4', '5'])
