@@ -27,9 +27,10 @@ def load_data(path):
 #
 #     return np.around(mov_av, decimals=2)
 
-########################################################## ??????????????????????????????????????
+########################################################## NEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEW
 
-def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns, buffer, initial_available_indices=None):
+def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
+                            averaging_lvl, ht_column_choice=None, initial_available_indices=None):
     """
         This function generates locations for the HTs to be placed.
 
@@ -37,51 +38,64 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns, buff
                     ht_length     -> Number of rows to be allocated per HT instance. Same as T_ht.
                     total_rows    -> Number of rows in the dataset where the HT will be placed.
                     total_columns -> Number of columns in the dataset where the HT will be placed.
-                    buffer        -> Number of indices blocked from either side of the first index of an HT instance.
+                    averaging_lvl -> Number of elements used for calculating the column-wise moving average.
 
         Return:     * List of 'ht_count' number of tuples, where every tuple contains information
                       about the column and indices of a single HT instance.
-                    * List of the remaining available indices where 'choose_trojan_locations()'
-                      can be applied.
+                    * Tuple with cached up information, which may be useful at a later stage.
+                      Includes: (1) remaining_available_indices - Remaining indices where the HTs can be applied.
+                                (2) ht_indices_all,             - Sorted indices where the HTs have been applied.
+                                (3) ht_affected_indices_all.    - Sorted indices where the HTs have been applied
+                                                                  and where the HTs will affect the original value
+                                                                  in the dataset, due to the moving average effect.
 
     """
-
+    buffer = averaging_lvl + ht_length + 111  # Number of indices blocked on either side of the first index of an HT.
     if initial_available_indices is None:
-        initial_available_indices = np.arange(averaging_level, total_rows - ht_length)
+        initial_available_indices = np.arange(averaging_lvl, total_rows - ht_length)
 
     remaining_available_indices = initial_available_indices
 
     trojan_locations = []
-    # ht_index_list = np.array([], dtype=np.int64)
+    ht_indices_all = np.array([], dtype=np.int64)
+    ht_affected_indices_all = np.array([], dtype=np.int64)
     for _ in range(ht_count):
 
-        ht_column = np.random.choice(range(total_columns))
-        ht_index = np.random.choice(remaining_available_indices)    # choose index
+        if ht_column_choice is None:
+            ht_column = np.random.choice(range(total_columns))
+        else:
+            ht_column = ht_column_choice
+
+        ht_index = np.random.choice(remaining_available_indices)    # Randomly choose an HT's first index.
         ht_indices = np.arange(ht_index, ht_index + ht_length)
+        ht_indices_all = np.append(ht_indices_all, ht_indices)
+
+        ht_affected_indices = np.arange(ht_index, ht_index + ht_length + averaging_lvl)
+        ht_affected_indices_all = np.append(ht_affected_indices_all, ht_affected_indices)
 
         trojan_locations.append((ht_column, ht_indices))
 
         occupied_indices = np.arange(ht_index - buffer, ht_index + buffer + 1)
         remaining_available_indices = np.setdiff1d(remaining_available_indices, occupied_indices)
 
-        # ht_index_list = np.append(ht_index_list, np.arange(ht_index, ht_index + ht_length))
-        # ht_affected_index_list = np.append(ht_index_list, np.arange(ht_index, ht_index + ht_length + averaging_level))
+    ht_indices_all = np.sort(ht_indices_all)
+    ht_affected_indices_all = np.sort(ht_affected_indices_all)
 
-    # ht_index_list = np.sort(ht_index_list)
+    cache = (remaining_available_indices, ht_indices_all, ht_affected_indices_all)
 
-    return trojan_locations, remaining_available_indices
+    return trojan_locations, cache
 
 
-def generate_ht_instance(ht_length, distribution_type = 'normal', distribution_params):
+def generate_trojan_instance(ht_length, distribution_params, distribution_type='normal'):
     """
         This function generates a numpy array of power consumption values for a single HT instance.
 
         Arguments:  ht_length           -> Number of HT power values to be generated per HT instance. Same as T_ht.
-                    distribution_type   -> String containing 'normal' or 'uniform'. The distribution type from
-                                           which the HT's power consumption values will be drawn.
                     distribution_params -> Dictionary containing the parameters for the respective distribution.
                                            Keys: 'mean', 'sigma' for normal distribution,
                                                  'min', 'max' for uniform distribution.
+                    distribution_type   -> String containing 'normal' or 'uniform'. The distribution type from
+                                           which the HT's power consumption values will be drawn.
 
         Return:     * Array of length 'ht_length', containing HT's power consumption values.
 
@@ -92,14 +106,45 @@ def generate_ht_instance(ht_length, distribution_type = 'normal', distribution_p
         sigma = distribution_params["sigma"]
         ht_instance = np.random.normal(loc=mean, scale=sigma, size=(ht_length, 1))
     elif distribution_type is 'uniform':
-        ht_Pmin = distribution_params["min"]
-        ht_Pmax = distribution_params["max"]
-        ht_instance = np.random.uniform(low=ht_Pmin, high=ht_Pmax, size=(ht_length, 1))
+        ht_min = distribution_params["min"]
+        ht_max = distribution_params["max"]
+        ht_instance = np.random.uniform(low=ht_min, high=ht_max, size=(ht_length, 1))
     else:
         raise ValueError("The distribution type should be 'normal' or 'uniform'.")
 
     return ht_instance
-# ---------- ??????????????????????????????????????
+
+
+def matrix_of_trojans(total_rows, total_columns, trojan_locations, distribution_params, distribution_type='normal'):
+    """
+            This function generates a matrix of zeros with inserted power consumption
+            values for all instances of HTs in their appropriate indices and columns.
+
+            Arguments:  total_rows          -> Number of rows in the dataset where the HT will be placed.
+                        total_columns       -> Number of columns in the dataset where the HT will be placed.
+                        trojan_locations    -> List of tuples containing the column number and indices of the trojan.
+                        distribution_params -> Dictionary containing the parameters for the respective distribution.
+                                               Keys: 'mean', 'sigma' for normal distribution,
+                                                     'min', 'max' for uniform distribution.
+                        distribution_type   -> String containing 'normal' or 'uniform'. The distribution type from
+                                           which the HT's power consumption values will be drawn.
+
+            Return:   * Sparse matrix of trojans' power consumption values. The shape matches that of the dataset
+                        in which the HTs are to be inserted.
+
+        """
+
+    ht_matrix = np.zeros((total_rows, total_columns))
+
+    for col, rows in trojan_locations:
+        ht_length = rows.size
+        ht_instance = generate_trojan_instance(ht_length, distribution_params, distribution_type)
+        ht_matrix[rows, col] = ht_instance
+
+    return ht_matrix
+
+
+# ---------- NEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEW
 
 def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_column_choice=None):
     """ Take a random i from (0 : last - num_of_trojan_rows) and add HTs
