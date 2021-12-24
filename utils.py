@@ -157,7 +157,7 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
     trojan_locations, cache = choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
                                                       averaging_lvl, ht_column_choice=ht_column,
                                                       initial_available_indices=initial_available_indices)
-
+    _1, all_ht_indices, _3 = cache
     ht_distribution_params = ht_params_dictionary["ht_distribution_params"]
     ht_distribution_type   = ht_params_dictionary["ht_distribution_type"]
 
@@ -165,6 +165,10 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
                                   ht_distribution_params, distribution_type=ht_distribution_type)
 
     infected_dataset = dataset + ht_matrix
+    labels_y = np.ones((total_rows, 1), dtype=np.int32)
+    labels_y[all_ht_indices] = -1
+
+    infected_dataset = np.append(infected_dataset, labels_y, axis=1)
 
     return infected_dataset
 
