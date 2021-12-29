@@ -4,31 +4,23 @@ import numpy as np
 
 def load_data(path):
     """
-    - delete column with sum (in this particular case we don't need to measure the sum)
-    - delete non-unique rows
+    Load the CSV file data from the given path and store in a pandas data frame.
+
+    Arguments:  path    -> Path to the CSV data file with HT-clean raw data points.
+
+    Return:     * Pandas data frame.
+
     """
-    # data = pd.read_csv(r'C:\Users\Gor\Desktop\ALL.txt', header=None, sep=';')
+
     data = pd.read_csv(path, header=None, sep=',')
-    # data.columns = ['sum', '1', '2', '3', '4', '5', 'V_all', 'V1', 'V2', 'V3', 'V4', 'V5']
-    # data = data.drop(['sum', 'V_all', 'V1', 'V2', 'V3', 'V4', 'V5'], axis=1)
-    # data.columns = ['V_all', 'sum', '1', '2', '3', '4', '5']
     data.columns = ['1', '2', '3', '4', '5']
+
     # data = data.drop(['sum', 'V_all', 'V1', 'V2', 'V3', 'V4', 'V5'], axis=1)
-    # data = data[:10000]
     # data = data.drop_duplicates()
+    # data = data[:10000]
 
-    return data[['1', '2', '3', '4', '5']]
+    return data
 
-
-# def moving_average_numpy(data_set, periods=3):
-#     """Return numpy array of the moving averages"""
-#
-#     weights = np.ones(periods) / periods
-#     mov_av = np.convolve(data_set, weights, mode='valid')
-#
-#     return np.around(mov_av, decimals=2)
-
-########################################################## NEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEW
 
 def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
                             averaging_lvl, ht_column_choice=None, initial_available_indices=None):
@@ -138,8 +130,8 @@ def matrix_of_trojans(total_rows, total_columns, trojan_locations, distribution_
                 distribution_type   -> String containing 'normal' or 'uniform'. The distribution type from
                                        which the HT's power consumption values will be drawn.
 
-    Return:   * Sparse matrix of trojans' power consumption values. The shape matches that of the dataset
-                in which the HTs are to be inserted.
+    Return:     * Sparse matrix of trojans' power consumption values. The shape matches that of the dataset
+                  in which the HTs are to be inserted.
 
     """
 
@@ -214,7 +206,7 @@ def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
                 avg_lvl -> Integer specifying the size of the window for calculating the moving average.
                 drop_initial_data -> 'True' for dropping and 'False' for leaving the initial columns. 
 
-    Return:   * Pandas data frame.
+    Return:     * Pandas data frame.
 
     """
     pd.DataFrame(dataset, columns=['1', '2', '3', '4', '5', 'labels_y'])
@@ -244,7 +236,7 @@ def train_dev_test_set(dataset, dev_test_ratio, ht_affected_indices_all):
                                            and where the HTs have affected the original value in
                                            the dataset, due to the moving average effect.
 
-    Return:   * Train, development and test datasets.
+    Return:     * Train, development and test datasets.
 
     """
     dev_ratio, test_ratio = dev_test_ratio
@@ -275,8 +267,7 @@ def train_dev_test_set(dataset, dev_test_ratio, ht_affected_indices_all):
     return train_set, dev_set, test_set
 
 
-# ---------- NEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEW
-
+# ######################################################### OLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLD
 
 def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_column_choice=None):
     """ Take a random i from (0 : last - num_of_trojan_rows) and add HTs
@@ -311,21 +302,6 @@ def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_
     return infected_data_all
 
 
-# def moving_average_panda(data_set, periods=4, drop_initial_data=True):
-#     """Return panda data frame of the moving averages"""
-#
-#     data_set['MA_Col1'] = data_set.iloc[:, 0].rolling(window=periods).mean()
-#     data_set['MA_Col2'] = data_set.iloc[:, 1].rolling(window=periods).mean()
-#     data_set['MA_Col3'] = data_set.iloc[:, 2].rolling(window=periods).mean()
-#     data_set['MA_Col4'] = data_set.iloc[:, 3].rolling(window=periods).mean()
-#     data_set['MA_Col5'] = data_set.iloc[:, 4].rolling(window=periods).mean()
-#     if drop_initial_data:
-#         data_set.drop(['1', '2', '3', '4', '5'], axis=1, inplace=True)
-#     data_set.drop(range(periods), inplace=True)
-#
-#     return data_set
-
-
 def split_to_train_test(split_ratio, input_data):
     """ Split the input data into train data and
      test data, with the split ratio given as input"""
@@ -339,3 +315,5 @@ def split_to_train_test(split_ratio, input_data):
     test_data = data[a: rows+1]
 
     return train_data, test_data
+
+
