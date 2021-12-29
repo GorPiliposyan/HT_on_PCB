@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def load_data(path):
     """
     - delete column with sum (in this particular case we don't need to measure the sum)
@@ -39,6 +40,9 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
                 total_rows    -> Number of rows in the dataset where the HT will be placed.
                 total_columns -> Number of columns in the dataset where the HT will be placed.
                 averaging_lvl -> Number of elements used for calculating the column-wise moving average.
+                ht_column_choice -> 'None' or integer smaller than the number of columns.
+                initial_available_indices -> 'None' or numpy array of available/desired index range open to
+                                              apply HTs. Elements must be within dataset row range.
 
     Return:     * List of 'ht_count' number of tuples, where every tuple contains information
                   about the column and indices of a single HT instance.
@@ -64,8 +68,11 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
 
         if ht_column_choice is None:
             ht_column = np.random.choice(range(total_columns))
-        else:
+        elif ht_column_choice in range(total_columns):
             ht_column = ht_column_choice
+        else:
+            raise ValueError("The ht_column_choice should be 'None' or integer smaller than the number of columns.")
+            # sys.exit("Provide correct ht_column_choice.")
 
         ht_index = np.random.choice(remaining_available_indices)    # Randomly choose an HT's first index.
         ht_indices = np.arange(ht_index, ht_index + ht_length)
@@ -112,6 +119,7 @@ def generate_trojan_instance(ht_length, distribution_params, distribution_type='
         ht_instance = np.random.uniform(low=ht_min, high=ht_max, size=(ht_length, 1))
     else:
         raise ValueError("The distribution type should be 'normal' or 'uniform'.")
+        # sys.exit("Provide correct distribution type.")
 
     return ht_instance
 
@@ -128,7 +136,7 @@ def matrix_of_trojans(total_rows, total_columns, trojan_locations, distribution_
                                        Keys: 'mean', 'sigma' for normal distribution,
                                              'min', 'max' for uniform distribution.
                 distribution_type   -> String containing 'normal' or 'uniform'. The distribution type from
-                                   which the HT's power consumption values will be drawn.
+                                       which the HT's power consumption values will be drawn.
 
     Return:   * Sparse matrix of trojans' power consumption values. The shape matches that of the dataset
                 in which the HTs are to be inserted.
@@ -147,7 +155,29 @@ def matrix_of_trojans(total_rows, total_columns, trojan_locations, distribution_
 
 def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_available_indices=None):
     """
-    BLANK
+    This function takes the HT-clean dataset and overlays the HT (sparse) matrix, which
+    should have the same shape as the HT-clean dataset. This function also adds an extra
+    column for the labels y which indicates the rows with added HTs.
+
+    Arguments:  dataset             -> The HT-clean raw dataset.
+                averaging_lvl       -> Number of elements used for calculating the column-wise moving average.
+                ht_params_dictionary     -> Dictionary containing parameter keys:
+                                                ht_count -  Number of HT instances to be placed.
+                                                ht_length - Number of HT power values to be generated per HT
+                                                            instance. Same as T_ht.
+                                                ht_column_choice - 'None' or integer smaller than the number of columns.
+                                                ht_distribution_params - Dictionary containing the parameters for
+                                                                         the respective distribution. Keys:
+                                                                         'mean', 'sigma' for normal distribution,
+                                                                         'min', 'max' for uniform distribution.
+                                                ht_distribution_type   - String containing 'normal' or 'uniform'.
+                                                                         The distribution type from which the HT's
+                                                                         power consumption values will be drawn.
+                initial_available_indices     -> 'None' or numpy array of available/desired index range open to
+                                                  apply HTs. Elements must be within dataset row range.
+
+    Return:   * The HT-infected dataset with an extra column 'labels' indicating the rows without (1) and with (-1) HTs.
+
     """
     total_rows, total_columns = dataset.shape
     ht_count  = ht_params_dictionary["ht_count"]
@@ -172,6 +202,40 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
 
     return infected_dataset
 
+
+
+def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
+    """
+    This function calculates the moving averages of every column and 
+    appends to the dataset in a new column in the respective row. It
+    also provides the option of dropping the initial columns and
+    leaving only the columns consisting of the moving averages.
+
+    Arguments:  dataset -> The dataset.
+                avg_lvl -> Integer specifying the size of the window for calculating the moving average.
+                drop_initial_data -> 'True' for dropping and 'False' for leaving the initial columns. 
+
+    Return:   * Pandas data frame.
+
+    """
+    pd.DataFrame(dataset, columns=['1', '2', '3', '4', '5'])
+    dataset['MA_Col1'] = dataset.iloc[:, 0].rolling(window=avg_lvl).mean()
+    dataset['MA_Col2'] = dataset.iloc[:, 1].rolling(window=avg_lvl).mean()
+    dataset['MA_Col3'] = dataset.iloc[:, 2].rolling(window=avg_lvl).mean()
+    dataset['MA_Col4'] = dataset.iloc[:, 3].rolling(window=avg_lvl).mean()
+    dataset['MA_Col5'] = dataset.iloc[:, 4].rolling(window=avg_lvl).mean()
+    if drop_initial_data:
+        dataset.drop(['1', '2', '3', '4', '5'], axis=1, inplace=True)
+    dataset.drop(range(avg_lvl), inplace=True)
+
+    return dataset
+
+
+def train_dev_test_set():
+
+    pass
+
+    return
 # ---------- NEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEW
 
 
@@ -208,19 +272,19 @@ def add_trojan_rows(data_set, i, num_of_trojan_rows, trojan_min, trojan_max, ht_
     return infected_data_all
 
 
-def moving_average_panda(data_set, periods=4, drop_initial_data=True):
-    """Return panda data frame of the moving averages"""
-
-    data_set['MA_Col1'] = data_set.iloc[:, 0].rolling(window=periods).mean()
-    data_set['MA_Col2'] = data_set.iloc[:, 1].rolling(window=periods).mean()
-    data_set['MA_Col3'] = data_set.iloc[:, 2].rolling(window=periods).mean()
-    data_set['MA_Col4'] = data_set.iloc[:, 3].rolling(window=periods).mean()
-    data_set['MA_Col5'] = data_set.iloc[:, 4].rolling(window=periods).mean()
-    if drop_initial_data:
-        data_set.drop(['1', '2', '3', '4', '5'], axis=1, inplace=True)
-    data_set.drop(range(periods), inplace=True)
-
-    return data_set
+# def moving_average_panda(data_set, periods=4, drop_initial_data=True):
+#     """Return panda data frame of the moving averages"""
+#
+#     data_set['MA_Col1'] = data_set.iloc[:, 0].rolling(window=periods).mean()
+#     data_set['MA_Col2'] = data_set.iloc[:, 1].rolling(window=periods).mean()
+#     data_set['MA_Col3'] = data_set.iloc[:, 2].rolling(window=periods).mean()
+#     data_set['MA_Col4'] = data_set.iloc[:, 3].rolling(window=periods).mean()
+#     data_set['MA_Col5'] = data_set.iloc[:, 4].rolling(window=periods).mean()
+#     if drop_initial_data:
+#         data_set.drop(['1', '2', '3', '4', '5'], axis=1, inplace=True)
+#     data_set.drop(range(periods), inplace=True)
+#
+#     return data_set
 
 
 def split_to_train_test(split_ratio, input_data):
