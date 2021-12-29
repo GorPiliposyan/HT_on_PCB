@@ -48,10 +48,10 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
                   about the column and indices of a single HT instance.
                 * Tuple with cached up information, which may be useful at a later stage.
                   Includes: (1) remaining_available_indices - Remaining indices where the HTs can be applied.
-                            (2) ht_indices_all,             - Sorted indices where the HTs have been applied.
-                            (3) ht_affected_indices_all.    - Sorted indices where the HTs have been applied
-                                                              and where the HTs will affect the original value
-                                                              in the dataset, due to the moving average effect.
+                            (2) ht_indices_all,             - Sorted list of indices where the HTs have been applied.
+                            (3) ht_affected_indices_all.    - Sorted list of indices where the HTs have been applied
+                                                              and where the HTs will affect the original value in
+                                                              the dataset, due to the moving average effect.
 
     """
 
@@ -203,7 +203,6 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
     return infected_dataset
 
 
-
 def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
     """
     This function calculates the moving averages of every column and 
@@ -218,7 +217,7 @@ def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
     Return:   * Pandas data frame.
 
     """
-    pd.DataFrame(dataset, columns=['1', '2', '3', '4', '5'])
+    pd.DataFrame(dataset, columns=['1', '2', '3', '4', '5', 'labels_y'])
     dataset['MA_Col1'] = dataset.iloc[:, 0].rolling(window=avg_lvl).mean()
     dataset['MA_Col2'] = dataset.iloc[:, 1].rolling(window=avg_lvl).mean()
     dataset['MA_Col3'] = dataset.iloc[:, 2].rolling(window=avg_lvl).mean()
@@ -231,11 +230,51 @@ def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
     return dataset
 
 
-def train_dev_test_set():
+def train_dev_test_set(dataset, dev_test_ratio, ht_affected_indices_all):
+    """
+    This function divides a dataset into three datasets: train, development, test.
+    Train dataset contains HT-clean points, while development and test datasets
+    contain 50% HT-clean and 50% HT-infected points.
+    The division is done based on the given dev_test_ratio tuple.
 
-    pass
+    Arguments:  dataset -> The dataset (keep the original indexing, until the ht_affected_indices_all are removed).
+                dev_test_ratio -> Tuple floats containing development and test set size
+                ratios to the combined size. Should add up to 1.
+                ht_affected_indices_all -> Sorted list of indices where the HTs have been applied
+                                           and where the HTs have affected the original value in
+                                           the dataset, due to the moving average effect.
 
-    return
+    Return:   * Train, development and test datasets.
+
+    """
+    dev_ratio, test_ratio = dev_test_ratio
+
+    all_ht_data = dataset.loc[dataset['labels_y'] == -1]
+    all_ht_clean_data = dataset.drop([ht_affected_indices_all])
+
+    all_ht_clean_data.drop_duplicates(inplace=True)
+
+    all_ht_data = all_ht_data.sample(frac=1)
+    all_ht_clean_data = all_ht_clean_data.sample(frac=1)
+
+    all_ht_data.reset_index(inplace=True)
+    all_ht_clean_data.reset_index(inplace=True)
+
+    rows_ht, cols_ht = all_ht_data.shape
+
+    trojans_dev  = all_ht_data.iloc[:int(dev_ratio*rows_ht), :]
+    trojans_test = all_ht_data.iloc[int(dev_ratio*rows_ht):, :]
+
+    clean_dev  = all_ht_clean_data.iloc[:int(dev_ratio*rows_ht), :]
+    clean_test = all_ht_clean_data.iloc[int(dev_ratio*rows_ht):rows_ht, :]
+
+    train_set = all_ht_clean_data.iloc[rows_ht:, :]
+    dev_set = pd.concat([trojans_dev, clean_dev], axis=0)
+    test_set = pd.concat([trojans_test, clean_test], axis=0)
+
+    return train_set, dev_set, test_set
+
+
 # ---------- NEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEWNEW
 
 
