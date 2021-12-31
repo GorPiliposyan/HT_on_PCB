@@ -169,6 +169,12 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
                                                   apply HTs. Elements must be within dataset row range.
 
     Return:   * The HT-infected dataset with an extra column 'labels' indicating the rows without (1) and with (-1) HTs.
+              * Tuple with cached up information, which may be useful at a later stage.
+                Includes: (1) remaining_available_indices - Remaining indices where the HTs can be applied.
+                          (2) ht_indices_all,             - Sorted list of indices where the HTs have been applied.
+                          (3) ht_affected_indices_all.    - Sorted list of indices where the HTs have been applied
+                                                            and where the HTs will affect the original value in
+                                                            the dataset, due to the moving average effect.
 
     """
     total_rows, total_columns = dataset.shape
@@ -192,7 +198,7 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
 
     infected_dataset = np.append(infected_dataset, labels_y, axis=1)
 
-    return infected_dataset
+    return infected_dataset, cache
 
 
 def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
@@ -236,7 +242,7 @@ def train_dev_test_set(dataset, dev_test_ratio, ht_affected_indices_all):
                                            and where the HTs have affected the original value in
                                            the dataset, due to the moving average effect.
 
-    Return:     * Train, development and test datasets.
+    Return:     * Training, development and testing datasets.
 
     """
     dev_ratio, test_ratio = dev_test_ratio
