@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import sys
 
 
 def load_data(path):
@@ -83,6 +84,8 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
 
     cache = (remaining_available_indices, ht_indices_all, ht_affected_indices_all)
 
+    print("choose_trojan_locations: Done!")
+
     return trojan_locations, cache
 
 
@@ -104,14 +107,16 @@ def generate_trojan_instance(ht_length, distribution_params, distribution_type='
     if distribution_type is 'normal':
         mean = distribution_params["mean"]
         sigma = distribution_params["sigma"]
-        ht_instance = np.random.normal(loc=mean, scale=sigma, size=(ht_length, 1))
+        ht_instance = np.random.normal(loc=mean, scale=sigma, size=(ht_length, ))
     elif distribution_type is 'uniform':
         ht_min = distribution_params["min"]
         ht_max = distribution_params["max"]
-        ht_instance = np.random.uniform(low=ht_min, high=ht_max, size=(ht_length, 1))
+        ht_instance = np.random.uniform(low=ht_min, high=ht_max, size=(ht_length, ))
     else:
         raise ValueError("The distribution type should be 'normal' or 'uniform'.")
         # sys.exit("Provide correct distribution type.")
+
+    print(".", end="")
 
     return ht_instance
 
@@ -141,6 +146,8 @@ def matrix_of_trojans(total_rows, total_columns, trojan_locations, distribution_
         ht_length = rows.size
         ht_instance = generate_trojan_instance(ht_length, distribution_params, distribution_type)
         ht_matrix[rows, col] = ht_instance
+
+    print("\nmatrix_of_trojans: Done!")
 
     return ht_matrix
 
@@ -198,6 +205,8 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
 
     infected_dataset = np.append(infected_dataset, labels_y, axis=1)
 
+    print("insert_all_trojans: Done!")
+
     return infected_dataset, cache
 
 
@@ -215,7 +224,7 @@ def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
     Return:     * Pandas data frame.
 
     """
-    pd.DataFrame(dataset, columns=['1', '2', '3', '4', '5', 'labels_y'])
+    dataset = pd.DataFrame(dataset, columns=['1', '2', '3', '4', '5', 'labels_y'])
     dataset['MA_Col1'] = dataset.iloc[:, 0].rolling(window=avg_lvl).mean()
     dataset['MA_Col2'] = dataset.iloc[:, 1].rolling(window=avg_lvl).mean()
     dataset['MA_Col3'] = dataset.iloc[:, 2].rolling(window=avg_lvl).mean()
@@ -224,6 +233,9 @@ def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
     if drop_initial_data:
         dataset.drop(['1', '2', '3', '4', '5'], axis=1, inplace=True)
     dataset.drop(range(avg_lvl), inplace=True)
+
+    print("moving_average_panda: Done!")
+    dataset = dataset[['1', '2', '3', '4', '5', 'MA_Col1', 'MA_Col2', 'MA_Col3', 'MA_Col4', 'MA_Col5', 'labels_y']]
 
     return dataset
 
@@ -248,7 +260,7 @@ def train_dev_test_set(dataset, dev_test_ratio, ht_affected_indices_all):
     dev_ratio, test_ratio = dev_test_ratio
 
     all_ht_data = dataset.loc[dataset['labels_y'] == -1]
-    all_ht_clean_data = dataset.drop([ht_affected_indices_all])
+    all_ht_clean_data = dataset.drop(ht_affected_indices_all)
 
     all_ht_clean_data.drop_duplicates(inplace=True)
 
@@ -266,9 +278,11 @@ def train_dev_test_set(dataset, dev_test_ratio, ht_affected_indices_all):
     clean_dev  = all_ht_clean_data.iloc[:int(dev_ratio*rows_ht), :]
     clean_test = all_ht_clean_data.iloc[int(dev_ratio*rows_ht):rows_ht, :]
 
-    train_set = all_ht_clean_data.iloc[rows_ht:, :]
-    dev_set = pd.concat([trojans_dev, clean_dev], axis=0)
-    test_set = pd.concat([trojans_test, clean_test], axis=0)
+    train_set = all_ht_clean_data.iloc[rows_ht:, :].drop(['index'], axis=1)
+    dev_set = pd.concat([trojans_dev, clean_dev], axis=0).drop(['index'], axis=1)
+    test_set = pd.concat([trojans_test, clean_test], axis=0).drop(['index'], axis=1)
+
+    print("train_dev_test_set: Done!")
 
     return train_set, dev_set, test_set
 
