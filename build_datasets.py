@@ -23,20 +23,23 @@ ht_params_dictionary = {
     "ht_distribution_type": "normal",                   # 'normal' or 'uniform'
 }
 
+dev_test_ratio = (0.7, 0.3)
+
+
 
 ht_column = None    # If None, will pick a random available column
 averaging_level = 5
 
-P_trojan_min = 10
-P_trojan_max = 20
+# P_trojan_min = 10
+# P_trojan_max = 20
 
-num_of_ht_rows = 1000  # HT points per instance
-total_num_of_HT_rows = 100000  # total number of HT rows to be generated
-N = int(total_num_of_HT_rows/num_of_ht_rows)   # number of HT locations
+# num_of_ht_rows = 1000  # HT points per instance
+# total_num_of_HT_rows = 100000  # total number of HT rows to be generated
+# N = int(total_num_of_HT_rows/num_of_ht_rows)   # number of HT locations
 
 
-just_in_case = 200
-buffer_zone = averaging_level + num_of_ht_rows + just_in_case
+# just_in_case = 200
+# buffer_zone = averaging_level + num_of_ht_rows + just_in_case
 # ----------
 
 
@@ -101,7 +104,6 @@ all_data = moving_average_panda(all_data, averaging_level, drop_initial_data=Fal
 ##########################################################
 # Create Train, Development and Test sets.
 
-dev_test_ratio = (0.7, 0.3)
 _1, _2, ht_affected_indices_all = cache
 train_set, dev_set, test_set = train_dev_test_set(df, dev_test_ratio, ht_affected_indices_all)
 
@@ -160,13 +162,6 @@ with open("../../DATA/newerrrr_DATA/DELETE_THIS/README.txt", "w") as text_file:
 #     print("The following parameters have been chosen to generate a {} row long HT dataset\n".format(num_of_ht_rows*N),
 #           "\nAveraging level = {}\nHT points = {}\nHT P_min = {}\nHT P_max = {}".format(averaging_level, num_of_ht_rows, P_trojan_min, P_trojan_max), file=text_file)
 
-
-# np.savetxt("C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/DATA/newerrrr_DATA/HT_to_draw_2D_diagrams/my_training_data.txt", training_data, fmt='%.2f', delimiter=", ")
-# np.savetxt("C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/DATA/newerrrr_DATA/HT_to_draw_2D_diagrams/my_testing_data.txt", testing_data, fmt='%.2f', delimiter=", ")
-# np.savetxt("C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/DATA/newerrrr_DATA/HT_to_draw_2D_diagrams/my_trojan_data.txt", trojan_rows, fmt='%.2f', delimiter=", ")
-# with open( "C:/Users/Gor/Desktop/PhD_project_2/Important_files-3/DATA/newerrrr_DATA/HT_to_draw_2D_diagrams/README.txt", "w") as text_file:
-#     print("The following parameters have been chosen to generate a {} row long HT dataset\n".format(num_of_ht_rows*N),
-#           "\nAveraging level = {}\nHT points = {}\nHT P_min = {}\nHT P_max = {}".format(averaging_level, num_of_ht_rows, P_trojan_min, P_trojan_max), file=text_file)
 """
 #----------
 
