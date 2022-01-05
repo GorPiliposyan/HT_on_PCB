@@ -11,7 +11,7 @@ ht_count = int(total_num_of_HT_rows/ht_length)   # number of HT locations
 dev_test_ratio = (0.7, 0.3)
 averaging_level = 5
 
-ht_distribution_params = {
+ht_distribution = {
     "mean": 10,                 # normal distribution mean
     "sigma": 1,                 # normal distribution standard deviation
     "min": 10,                  # uniform distribution min
@@ -22,7 +22,7 @@ ht_params_dictionary = {
     "ht_count": ht_count,
     "ht_length": ht_length,  # If you later decide to have several values in a list, sort ht_length from large to small!
     "ht_column_choice": None,
-    "ht_distribution_params": ht_distribution_params,
+    "ht_distribution": ht_distribution,
     "ht_distribution_type": "normal",                   # 'normal' or 'uniform'
 }
 
@@ -74,8 +74,8 @@ with open("../../DATA/newerrrr_DATA/DELETE_THIS/README.txt", "w") as text_file:
     print("The following parameters have been chosen to generate a {} row long HT dataset\n".format(ht_length*ht_count),
           "Averaging level = {}\nHT instance length = {}\n\n".format(averaging_level, ht_length),
           "Distribution: {}\n".format(ht_params_dictionary["ht_distribution_type"]),
-          "mean = {}\nst. dev. = {}\n".format(ht_distribution_params["mean"], ht_distribution_params["sigma"]),
-          "min = {}\nmax = {}\n".format(ht_distribution_params["min"], ht_distribution_params["max"]), file=text_file)
+          "mean = {}\nst. dev. = {}\n".format(ht_distribution["mean"], ht_distribution["sigma"]),
+          "min = {}\nmax = {}\n".format(ht_distribution["min"], ht_distribution["max"]), file=text_file)
 
 
 """

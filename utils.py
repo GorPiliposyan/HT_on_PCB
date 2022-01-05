@@ -165,7 +165,7 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
                                                 ht_length - Number of HT power values to be generated per HT
                                                             instance. Same as T_ht.
                                                 ht_column_choice - 'None' or integer smaller than the number of columns.
-                                                ht_distribution_params - Dictionary containing the parameters for
+                                                ht_distribution  -  Dictionary containing the parameters for
                                                                          the respective distribution. Keys:
                                                                          'mean', 'sigma' for normal distribution,
                                                                          'min', 'max' for uniform distribution.
@@ -193,11 +193,11 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
                                                       averaging_lvl, ht_column_choice=ht_column,
                                                       initial_available_indices=initial_available_indices)
     _1, all_ht_indices, _3 = cache
-    ht_distribution_params = ht_params_dictionary["ht_distribution_params"]
+    ht_distribution = ht_params_dictionary["ht_distribution"]
     ht_distribution_type   = ht_params_dictionary["ht_distribution_type"]
 
     ht_matrix = matrix_of_trojans(total_rows, total_columns, trojan_locations,
-                                  ht_distribution_params, distribution_type=ht_distribution_type)
+                                  ht_distribution, distribution_type=ht_distribution_type)
 
     infected_dataset = dataset + ht_matrix
     labels_y = np.ones((total_rows, 1), dtype=np.int32)
