@@ -26,6 +26,15 @@ ht_params_dictionary = {
     "ht_distribution_type": "normal",                   # 'normal' or 'uniform'
 }
 
+# ht_lengths = [20, 50, 100] # In case of several values in this list, ht_length should be sorted from large to small!
+# ht_params_dictionary = {
+#     "ht_count": ht_count,
+#     "ht_lengths": ht_lengths,
+#     "ht_column_choice": None,
+#     "ht_distribution_tuples": [("normal", 10, 1), ("normal", 15, 1), ("normal", 20, 1)],
+# }
+#
+
 
 ##########################################################
 # Load the raw dataset. (Only HT-clean data points)
