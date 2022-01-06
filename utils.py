@@ -48,7 +48,7 @@ def choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
 
     """
 
-    buffer = averaging_lvl + ht_length + 111  # Number of indices blocked on either side of the first index of an HT.
+    buffer = averaging_lvl + ht_length + 77  # Number of indices blocked on either side of the first index of an HT.
     if initial_available_indices is None:
         initial_available_indices = np.arange(averaging_lvl, total_rows - ht_length)
 
@@ -152,6 +152,41 @@ def matrix_of_trojans(total_rows, total_columns, trojan_locations, distribution_
     return ht_matrix
 
 
+# UPDATED VERSION
+# def matrix_of_trojans(ht_matrix, total_rows, total_columns, trojan_locations, ht_distribution):
+#     """
+#     This function adds a single trojan instance to the ht_matrix, which is a sparse matrix with
+#     inserted power consumption values for all instances of HTs in their appropriate indices and columns.
+#
+#     Arguments:  ht_matrix        -> Sparse matrix containing power consumption values for all existing instances of HTs.
+#                 total_rows       -> Number of rows in the dataset where the HT will be placed.
+#                 total_columns    -> Number of columns in the dataset where the HT will be placed.
+#                 trojan_locations -> List of tuples containing the column number and indices of the trojan.
+#                 ht_distribution  -> Tuple describing the ht power consumption distribution. Contains
+#                                     either ('normal', mean_value, sigma) or ('uniform', min_value, max_value)
+#
+#     Return:     * Sparse matrix containing power consumption values for all existing instances of HTs.
+#                   The shape matches that of the dataset in which the HTs are to be inserted.
+#
+#     """
+#
+#     ht_matrix = ht_matrix
+#     distribution_type = ht_distribution[0]
+#     if distribution_type is "normal":
+#       distribution_params = ht_distribution = {"mean": ht_distribution[1], "sigma": ht_distribution[2]}
+#     elif distribution_type is "uniform"
+#       distribution_params = ht_distribution = {"min": ht_distribution[1], "max": ht_distribution[2]}
+#
+#     for col, rows in trojan_locations:
+#         ht_length = rows.size
+#         ht_instance = generate_trojan_instance(ht_length, distribution_params, distribution_type)
+#         ht_matrix[rows, col] = ht_instance
+#
+#     print("\nmatrix_of_trojans: Done!")
+#
+#     return ht_matrix
+
+
 def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_available_indices=None):
     """
     This function takes the HT-clean dataset and overlays the HT (sparse) matrix, which
@@ -199,6 +234,26 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
     ht_matrix = matrix_of_trojans(total_rows, total_columns, trojan_locations,
                                   ht_distribution, distribution_type=ht_distribution_type)
 
+    # ht_matrix = np.zeros((total_rows, total_columns))
+    # remaining_available_indices = initial_available_indices
+    # ht_distribution_tuples = ht_params_dictionary["ht_distribution_tuples"]
+    # ht_lengths = ht_params_dictionary["ht_lengths"]
+    # all_ht_indices = []
+    # all_ht_affected_indices = []
+    # caches = []
+    # for ht_length in ht_lengths:
+    #     for ht_distribution_tuple in ht_distribution_tuples:
+    #
+    #         trojan_locations, cache = choose_trojan_locations(ht_count, ht_length, total_rows, total_columns,
+    #                                                           averaging_lvl, ht_column_choice=ht_column,
+    #                                                           initial_available_indices=remaining_available_indices)
+    #         remaining_available_indices, new_ht_indices, new_ht_affected_indices = cache
+    #         all_ht_indices.extend(new_ht_indices)
+    #         all_ht_affected_indices.extend(new_ht_affected_indices)
+    #         caches.extend(cache)
+    #         ht_matrix = matrix_of_trojans(ht_matrix, total_rows, total_columns,
+    #                                       trojan_locations, ht_distribution_tuple)
+
     infected_dataset = dataset + ht_matrix
     labels_y = np.ones((total_rows, 1), dtype=np.int32)
     labels_y[all_ht_indices] = -1
@@ -207,7 +262,7 @@ def insert_all_trojans(dataset, averaging_lvl, ht_params_dictionary, initial_ava
 
     print("insert_all_trojans: Done!")
 
-    return infected_dataset, cache
+    return infected_dataset, cache  # return infected_dataset, all_ht_affected_indices, caches
 
 
 def moving_average_panda(dataset, avg_lvl=5, drop_initial_data=True):
