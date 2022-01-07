@@ -4,7 +4,7 @@ from utils import *
 
 ##########################################################
 # Set parameters.
-
+"""
 ht_length = 1000  # HT points per instance
 total_num_of_HT_rows = 100000  # total number of HT rows to be generated
 ht_count = int(total_num_of_HT_rows/ht_length)   # number of HT locations
@@ -25,15 +25,24 @@ ht_params_dictionary = {
     "ht_distribution": ht_distribution,
     "ht_distribution_type": "normal",                   # 'normal' or 'uniform'
 }
+"""
 
-# ht_lengths = [20, 50, 100] # In case of several values in this list, ht_length should be sorted from large to small!
-# ht_params_dictionary = {
-#     "ht_count": ht_count,
-#     "ht_lengths": ht_lengths,
-#     "ht_column_choice": None,
-#     "ht_distribution_tuples": [("normal", 10, 1), ("normal", 15, 1), ("normal", 20, 1)],
-# }
-#
+# ht_distribution_tuples = [("normal", mean, st. dev.), ("uniform", min, max)]   <-->   MOCK EXAMPLE
+ht_distribution_tuples = [("normal", 10, 1), ("normal", 15, 1), ("normal", 20, 1)]
+x = 111
+ht_counts = [1*x, 2*x, 5*x] # List of the quantities of HT instances to be placed per ht_length value for every distribution.
+ht_lengths = [100, 50, 20] # In case of several values in this list, ht_length should be sorted from large to small!
+
+ht_params_dictionary = {
+    "ht_counts": ht_counts,
+    "ht_lengths": ht_lengths,
+    "ht_counts_lengths": zip(ht_counts,ht_lengths),
+    "ht_column_choice": None,
+    "ht_distribution_tuples": ht_distribution_tuples,
+}
+
+dev_test_ratio = (0.7, 0.3)
+averaging_level = 5
 
 
 ##########################################################
@@ -54,7 +63,8 @@ all_data_numpy = np.r_[all_data]
 ##########################################################
 # Add Trojan rows to the data.
 
-ht_infected_dataset, cache = insert_all_trojans(dataset, averaging_level, ht_params_dictionary)
+# ht_infected_dataset, cache = insert_all_trojans(dataset, averaging_level, ht_params_dictionary)
+ht_infected_dataset, ht_affected_indices_all, caches = insert_all_trojans(dataset, averaging_level, ht_params_dictionary)
 
 
 ##########################################################
@@ -66,7 +76,7 @@ df = moving_average_panda(ht_infected_dataset, avg_lvl=averaging_level, drop_ini
 ##########################################################
 # Create Train, Development and Test sets.
 
-_1, _2, ht_affected_indices_all = cache
+"""_1, _2, ht_affected_indices_all = cache"""
 train_set, dev_set, test_set = train_dev_test_set(df, dev_test_ratio, ht_affected_indices_all)
 
 
@@ -80,11 +90,18 @@ np.savetxt("../../DATA/newerrrr_DATA/DELETE_THIS/my_dev_set.txt", dev_set, fmt='
 np.savetxt("../../DATA/newerrrr_DATA/DELETE_THIS/my_test_set.txt", test_set, fmt='%5.2f', delimiter=", ")
 
 with open("../../DATA/newerrrr_DATA/DELETE_THIS/README.txt", "w") as text_file:
-    print("The following parameters have been chosen to generate a {} row long HT dataset\n".format(ht_length*ht_count),
-          "Averaging level = {}\nHT instance length = {}\n\n".format(averaging_level, ht_length),
-          "Distribution: {}\n".format(ht_params_dictionary["ht_distribution_type"]),
-          "mean = {}\nst. dev. = {}\n".format(ht_distribution["mean"], ht_distribution["sigma"]),
-          "min = {}\nmax = {}\n".format(ht_distribution["min"], ht_distribution["max"]), file=text_file)
+    print("The following parameters have been chosen to generate:",
+          "Test dataset - shape {} and Validation dataset - shape {}\n\n".format(test_set.shape, dev_set.shape),
+          "Averaging level = {}\n".format(averaging_level),
+          "HT instance length & count pairs= {}\n".format(zip(ht_lengths, ht_counts)),
+          "Distributions: {}\n".format(ht_distribution_tuples), file=text_file)
+#
+# with open("../../DATA/newerrrr_DATA/DELETE_THIS/README.txt", "w") as text_file:
+#     print("The following parameters have been chosen to generate a {} row long HT dataset\n".format(ht_length*ht_count),
+#           "Averaging level = {}\nHT instance length = {}\n\n".format(averaging_level, ht_length),
+#           "Distribution: {}\n".format(ht_params_dictionary["ht_distribution_type"]),
+#           "mean = {}\nst. dev. = {}\n".format(ht_distribution["mean"], ht_distribution["sigma"]),
+#           "min = {}\nmax = {}\n".format(ht_distribution["min"], ht_distribution["max"]), file=text_file)
 
 
 """
