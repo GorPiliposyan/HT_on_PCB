@@ -30,8 +30,8 @@ ht_params_dictionary = {
 # ht_distribution_tuples = [("normal", mean, st. dev.), ("uniform", min, max)]   <-->   MOCK EXAMPLE
 ht_distribution_tuples = [("normal", 10, 1), ("normal", 15, 1), ("normal", 20, 1)]
 x = 111
-ht_counts = [1*x, 2*x, 5*x] # List of the quantities of HT instances to be placed per ht_length value for every distribution.
-ht_lengths = [100, 50, 20] # In case of several values in this list, ht_length should be sorted from large to small!
+ht_counts = [1*x, 2*x, 5*x]  # (For each distribution) Quantities of HT instances to be placed per ht_length value.
+ht_lengths = [100, 50, 20]  # In case of several values in this list, ht_length should be sorted from large to small!
 
 ht_params_dictionary = {
     "ht_counts": ht_counts,
@@ -90,10 +90,10 @@ np.savetxt("../../DATA/newerrrr_DATA/DELETE_THIS/my_dev_set.txt", dev_set, fmt='
 np.savetxt("../../DATA/newerrrr_DATA/DELETE_THIS/my_test_set.txt", test_set, fmt='%5.2f', delimiter=", ")
 
 with open("../../DATA/newerrrr_DATA/DELETE_THIS/README.txt", "w") as text_file:
-    print("The following parameters have been chosen to generate:",
+    print("The following parameters have been chosen to generate:\n",
           "Test dataset - shape {} and Validation dataset - shape {}\n\n".format(test_set.shape, dev_set.shape),
           "Averaging level = {}\n".format(averaging_level),
-          "HT instance length & count pairs= {}\n".format(zip(ht_lengths, ht_counts)),
+          "HT instance lengths {} & counts {} (consider pairwise)\n".format(ht_lengths, ht_counts),
           "Distributions: {}\n".format(ht_distribution_tuples), file=text_file)
 #
 # with open("../../DATA/newerrrr_DATA/DELETE_THIS/README.txt", "w") as text_file:
